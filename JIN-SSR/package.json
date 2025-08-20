@@ -5,16 +5,19 @@
   "type": "module",
   "scripts": {
     "dev": "node server",
+    "production": "cross-env NODE_ENV=production node server",
     "build": "npm run build:client && npm run build:server",
-    "build:client": "vite build --outDir dist/client",
-    "build:server": "vite build --ssr src/entry-server.ts --outDir dist/server",
+    "build:client": "vite build --ssrManifest .vite/ssr-manifest.json --outDir dist/client",
+    "build:server": "vite build --ssr src/entry-server.js --outDir dist/server",
     "preview": "cross-env NODE_ENV=production node server"
   },
   "dependencies": {
     "compression": "^1.8.1",
     "express": "^5.1.0",
+    "pinia": "^3.0.3",
     "sirv": "^3.0.1",
-    "vue": "^3.5.18"
+    "vue": "^3.5.18",
+    "vue-router": "^4.5.1"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",

@@ -36,7 +36,6 @@ if (!isProduction) {
 app.use('*all', async (req, res) => {
   try {
     const url = req.originalUrl.replace(base, '')
-
     /** @type {string} */
     let template
     /** @type {import('./src/entry-server.ts').render} */
@@ -47,23 +46,28 @@ app.use('*all', async (req, res) => {
       template = await vite.transformIndexHtml(url, template)
       render = (await vite.ssrLoadModule('/src/entry-server.ts')).render
     } else {
+
       template = templateHtml
       render = (await import('./dist/server/entry-server.js')).render
     }
 
-    const { stream } = render(url)
+    const manifest = isProduction ?
+      JSON.parse(await fs.readFile('./dist/client/.vite/ssr-manifest.json', 'utf-8'))
+      : {}
 
-    const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
+    const [ appHtml, preloadLinks ] = await render(url, manifest)
+    const html = template.replace('<!--app-html-->', appHtml).replace('<!--app-preload-links-->', preloadLinks)
+    // const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
 
     res.status(200).set({ 'Content-Type': 'text/html' })
 
-    res.write(htmlStart)
-    for await (const chunk of stream) {
-      if (res.closed) break
-      res.write(chunk)
-    }
-    res.write(htmlEnd)
-    res.end()
+    // res.write(htmlStart)
+    // for await (const chunk of stream) {
+    //   if (res.closed) break
+    //   res.write(chunk)
+    // }
+    // res.write(htmlEnd)
+    res.end(html)
   } catch (e) {
     vite?.ssrFixStacktrace(e)
     console.log(e.stack)
