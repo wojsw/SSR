@@ -1,15 +1,20 @@
 import fs from 'node:fs/promises'
 import express from 'express'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
 
 // Constants
 const isProduction = process.env.NODE_ENV === 'production'
-const port = process.env.PORT || 5173
+const port = process.env.PORT || 6173
 const base = process.env.BASE || '/'
+
+const _dirname = path.dirname(fileURLToPath(import.meta.url))
+const resolve = (p) => path.resolve(_dirname, p)
 
 // Cached production assets
 const templateHtml = isProduction
-  ? await fs.readFile('./dist/client/index.html', 'utf-8')
-  : ''
+  ? resolve('./dist/client/index.html')
+  : resolve('index.html')
 
 // Create http server
 const app = express()
@@ -40,14 +45,13 @@ app.use('*all', async (req, res) => {
     let template
     /** @type {import('./src/entry-server.ts').render} */
     let render
+    template = await fs.readFile(templateHtml, 'utf-8')
     if (!isProduction) {
       // Always read fresh template in development
-      template = await fs.readFile('./index.html', 'utf-8')
       template = await vite.transformIndexHtml(url, template)
       render = (await vite.ssrLoadModule('/src/entry-server.ts')).render
     } else {
 
-      template = templateHtml
       render = (await import('./dist/server/entry-server.js')).render
     }
 
@@ -79,3 +83,7 @@ app.use('*all', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server started at http://localhost:${port}`)
 })
+
+export async function createServer() {
+  return app
+}
