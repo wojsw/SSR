@@ -60,18 +60,18 @@ app.use('*all', async (req, res) => {
       : {}
 
     const [ appHtml, preloadLinks ] = await render(url, manifest)
-    const html = template.replace('<!--app-html-->', appHtml).replace('<!--app-preload-links-->', preloadLinks)
-    // const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
-
+    template = template.replace('<!--app-preload-links-->', preloadLinks)
+    const [htmlStart, htmlEnd] = template.split('<!--app-html-->')
+    
     res.status(200).set({ 'Content-Type': 'text/html' })
 
-    // res.write(htmlStart)
-    // for await (const chunk of stream) {
-    //   if (res.closed) break
-    //   res.write(chunk)
-    // }
-    // res.write(htmlEnd)
-    res.end(html)
+    res.write(htmlStart)
+    for await (const chunk of appHtml) {
+      if (res.closed) break
+      res.write(chunk)
+    }
+    res.write(htmlEnd)
+    res.end()
   } catch (e) {
     vite?.ssrFixStacktrace(e)
     console.log(e.stack)

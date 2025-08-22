@@ -1,5 +1,5 @@
 import { basename } from 'node:path'
-import { renderToNodeStream } from 'vue/server-renderer'
+import { renderToWebStream } from 'vue/server-renderer'
 import { createApp } from './main'
 
 function renderPreloadLink(file) {
@@ -59,7 +59,7 @@ export async function render(_url: string, manifest) {
   // itself on ctx.modules. After the render, ctx.modules would contain all the
   // components that have been instantiated during this render call.
   const ctx = {}
-  const html = renderToNodeStream(app, ctx)
+  const html = renderToWebStream(app, ctx)
 
   const preloadLinks = renderPreloadLinks(ctx.modules, manifest)
   return [html, preloadLinks]
